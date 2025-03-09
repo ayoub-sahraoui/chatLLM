@@ -65,12 +65,7 @@ const BotMessage = observer(function BotMessage({ message }: BotMessageProps) {
 
     return (
         <div className="p-4 rounded-lg max-w-[100%] relative markdown-content">
-            {/* Show typing indicator when the bot is responding */}
-            {message.isResponding && (
-                <div className="absolute top-1 left-1 p-1">
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
-            )}
+
 
             <div className="prose prose-sm max-w-none dark:prose-invert">
                 {safeContent ? (
@@ -81,7 +76,11 @@ const BotMessage = observer(function BotMessage({ message }: BotMessageProps) {
                         {safeContent}
                     </ReactMarkdown>
                 ) : (
-                    message.isResponding && <span>Thinking...</span>
+                    message.isResponding &&
+                    <div className="flex gap-1 items-center top-1 left-1 p-1">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                        <span>Responding...</span>
+                    </div>
                 )}
             </div>
 
