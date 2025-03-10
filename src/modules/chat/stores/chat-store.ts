@@ -173,9 +173,8 @@ class ChatStore {
 
       if (signal.aborted) {
         botMessage.setContent(
-          botMessage.content + "\n\n[Message generation stopped by user]"
+          botMessage.content + "\n\n[Message generation stopped.]"
         );
-        toast.info("Message generation stopped");
       } else {
         botMessage.setContent(
           "Sorry, there was an error processing your request."
@@ -324,6 +323,53 @@ class ChatStore {
     this.saveToStorage();
     this.createNewConversation();
     toast.success("All conversations cleared");
+  }
+
+  /**
+   * Send a single message using the processInput method from modelStore
+   * This is useful for simple, non-conversation interactions or quick commands
+   */
+  async sendSingleMessage(content: string) {
+    if (!content.trim()) return;
+    if (!this.activeConversation) {
+      this.createNewConversation();
+    }
+
+    const conversation = this.activeConversation!;
+
+    // Add user message
+    const userMessage = new Message(uuidv4(), content, "user");
+    conversation.addMessage(userMessage);
+
+    // Create bot message with loading indicator
+    const botMessage = new Message(uuidv4(), "", "bot", new Date(), true);
+    conversation.addMessage(botMessage);
+
+    try {
+      // Process input (handles commands automatically)
+      const response = await modelStore.processInput(content);
+
+      // Update bot message with response
+      botMessage.setContent(response);
+      botMessage.setIsResponding(false);
+
+      // Update conversation title if it's a new conversation
+      if (
+        conversation.title === "New Conversation" &&
+        conversation.messages.length <= 3
+      ) {
+        const shortenedContent =
+          content.length > 30 ? content.substring(0, 30) + "..." : content;
+        conversation.updateTitle(shortenedContent);
+      }
+    } catch (error) {
+      console.error("Error processing message:", error);
+      botMessage.setContent(
+        "Sorry, there was an error processing your request."
+      );
+      toast.error("Failed to get a response from the model.");
+      botMessage.setIsResponding(false);
+    }
   }
 }
 

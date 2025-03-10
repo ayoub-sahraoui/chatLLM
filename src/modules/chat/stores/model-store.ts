@@ -3,12 +3,17 @@ import { makeAutoObservable } from "mobx";
 import { ChatMessage, ChatOptions, Model } from "../types";
 import { ModelResponse, Ollama } from "ollama";
 import { v4 as uuidv4 } from "uuid";
+import { commandSystem } from "../commands/command-system";
 
 class ModelStore {
   models: Model[] = [];
   selectedModel: Model | null = null;
   loadingModels: boolean = false;
   ollama: Ollama;
+  defaultSystemMessage: ChatMessage = {
+    role: "system",
+    content: "You are a helpful assistant. Use clear and concise language.",
+  };
   modelsCapabilities: Record<string, string[]> = {
     "llama3.2": ["text-generation", "reasoning"],
     "llama3.2:11b": ["text-generation", "vision", "reasoning"],
@@ -73,7 +78,7 @@ class ModelStore {
     }
   }
 
-  async queryModel(prompt: string): Promise<string> {
+  async queryModel(prompt: string, systemMsg?: string): Promise<string> {
     if (!this.selectedModel) {
       throw new Error("No model selected");
     }
@@ -81,10 +86,14 @@ class ModelStore {
     try {
       let result = "";
 
+      // Use the default system message if none provided
+      const systemMessage = systemMsg || this.defaultSystemMessage.content;
+
       // Using the streaming API from Ollama library
       const response = await this.ollama.generate({
         model: this.selectedModel.name,
-        prompt,
+        prompt: prompt,
+        system: systemMessage,
         stream: true,
       });
 
@@ -123,10 +132,16 @@ class ModelStore {
         );
       }
 
+      // Add default system message if one isn't already present
+      const hasSystemMessage = messages.some((msg) => msg.role === "system");
+      const finalMessages = hasSystemMessage
+        ? messages
+        : [this.defaultSystemMessage, ...messages];
+
       // Using the chat API from Ollama
       const response = await this.ollama.chat({
         model: this.selectedModel.name,
-        messages,
+        messages: finalMessages,
         stream: true,
         options,
       });
@@ -170,10 +185,16 @@ class ModelStore {
         );
       }
 
+      // Add default system message if one isn't already present
+      const hasSystemMessage = messages.some((msg) => msg.role === "system");
+      const finalMessages = hasSystemMessage
+        ? messages
+        : [this.defaultSystemMessage, ...messages];
+
       // Using the chat API from Ollama with streaming
       const response = await this.ollama.chat({
         model: this.selectedModel.name,
-        messages,
+        messages: finalMessages,
         stream: true,
       });
 
@@ -309,6 +330,133 @@ class ModelStore {
     };
 
     return this.chat([message]);
+  }
+
+  /**
+   * Process input for commands and execute model query
+   */
+  async processInput(input: string): Promise<string> {
+    // Check if input is a command
+    const commandResult = commandSystem.processCommandInput(input);
+
+    if (commandResult.isCommand) {
+      // Use command-specific system message if provided
+      return this.queryModel(commandResult.prompt, commandResult.systemMessage);
+    } else {
+      // Regular query without command
+      return this.queryModel(input);
+    }
+  }
+
+  /**
+   * Process message for chat mode with potential commands
+   */
+  async processChat(
+    messages: ChatMessage[],
+    options?: ChatOptions
+  ): Promise<string> {
+    if (messages.length === 0) return "";
+
+    // Only process commands on the last user message
+    const lastMsg = messages[messages.length - 1];
+
+    if (lastMsg.role === "user" && typeof lastMsg.content === "string") {
+      const commandResult = commandSystem.processCommandInput(lastMsg.content);
+
+      if (commandResult.isCommand) {
+        // Replace the original message with the processed command
+        const updatedMessages = [
+          ...messages.slice(0, -1),
+          {
+            ...lastMsg,
+            content: commandResult.prompt,
+          },
+        ];
+
+        // Use command-specific system message if provided
+        if (commandResult.systemMessage) {
+          // Check if there's already a system message
+          const sysMessageIndex = updatedMessages.findIndex(
+            (m) => m.role === "system"
+          );
+
+          if (sysMessageIndex >= 0) {
+            // Replace existing system message
+            updatedMessages[sysMessageIndex] = {
+              role: "system",
+              content: commandResult.systemMessage,
+            };
+          } else {
+            // Add system message at the beginning
+            updatedMessages.unshift({
+              role: "system",
+              content: commandResult.systemMessage,
+            });
+          }
+        }
+
+        return this.chat(updatedMessages, options);
+      }
+    }
+
+    // No command found, proceed with normal chat
+    return this.chat(messages, options);
+  }
+
+  /**
+   * Stream chat with support for commands
+   */
+  async processStreamChat(
+    messages: ChatMessage[],
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
+  ): Promise<string> {
+    if (messages.length === 0) return "";
+
+    // Only process commands on the last user message
+    const lastMsg = messages[messages.length - 1];
+
+    if (lastMsg.role === "user" && typeof lastMsg.content === "string") {
+      const commandResult = commandSystem.processCommandInput(lastMsg.content);
+
+      if (commandResult.isCommand) {
+        // Replace the original message with the processed command
+        const updatedMessages = [
+          ...messages.slice(0, -1),
+          {
+            ...lastMsg,
+            content: commandResult.prompt,
+          },
+        ];
+
+        // Use command-specific system message if provided
+        if (commandResult.systemMessage) {
+          // Check if there's already a system message
+          const sysMessageIndex = updatedMessages.findIndex(
+            (m) => m.role === "system"
+          );
+
+          if (sysMessageIndex >= 0) {
+            // Replace existing system message
+            updatedMessages[sysMessageIndex] = {
+              role: "system",
+              content: commandResult.systemMessage,
+            };
+          } else {
+            // Add system message at the beginning
+            updatedMessages.unshift({
+              role: "system",
+              content: commandResult.systemMessage,
+            });
+          }
+        }
+
+        return this.streamChat(updatedMessages, onChunk, signal);
+      }
+    }
+
+    // No command found, proceed with normal chat
+    return this.streamChat(messages, onChunk, signal);
   }
 
   selectModel(model: Model) {

@@ -1,4 +1,4 @@
-import { Menu, MessageCircle, Search } from "lucide-react";
+import { Menu, MessageCircle, Search, Settings } from "lucide-react";
 import ChatBox from "../components/chat-box";
 import Conversation from "../components/conversation";
 import ConversationsList from "../components/conversations-list";
@@ -7,6 +7,8 @@ import clsx from "clsx";
 import { chatStore } from "../stores/chat-store";
 import { modelStore } from "../stores/model-store";
 import SearchModal from "../components/search-modal";
+import ThemeToggle from "../../../components/theme-toggle";
+import AppLogo from "../../../assets/chatllm-icon.svg";
 
 const Chat = observer(function Chat() {
     const localState = useLocalObservable(() => ({
@@ -38,7 +40,6 @@ const Chat = observer(function Chat() {
                 <div className="flex justify-between">
                     <div className="flex gap-1 items-center">
                         <Menu onClick={handleToggleSidebar} className="fixed top-3 left-3 w-8 h-8 p-1 hover:bg-gray-100 rounded-lg hover:cursor-pointer" />
-                        <span className="ml-10 font-bold">ChatLLM</span>
                     </div>
                     <div className="flex gap-2">
                         <SearchModal>
@@ -53,6 +54,16 @@ const Chat = observer(function Chat() {
                 </div>
             </div>
             <div className="flex-1 flex flex-col gap-2">
+                <div className="flex justify-between items-center p-2">
+                    <div className="flex gap-2 items-center">
+                        <img src={AppLogo} className="w-8 h-8" alt="" />
+                        <span className="font-bold">ChatLLM</span>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                        <ThemeToggle />
+                        <Settings className="w-8 h-8 p-1 hover:bg-gray-200 rounded-lg hover:cursor-pointer" />
+                    </div>
+                </div>
                 <Conversation />
                 <ChatBox />
             </div>

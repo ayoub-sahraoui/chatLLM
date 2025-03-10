@@ -27,14 +27,11 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadURL(
-    isDev
-      ? "http://localhost:5173"
-      : `file://${path.join(__dirname, "../build/index.html")}`
-  );
-
   if (isDev) {
+    mainWindow.loadURL("http://localhost:3000");
     mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadURL(`file://${path.join(__dirname, "../build/index.html")}`);
   }
 
   mainWindow.on("closed", () => {

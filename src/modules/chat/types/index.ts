@@ -200,3 +200,9 @@ export interface ChatResponse {
   done: boolean;
   total_duration?: number;
 }
+
+export interface CommandResult {
+  isCommand: boolean;
+  processedPrompt: string;
+  systemMessage?: string;
+}
