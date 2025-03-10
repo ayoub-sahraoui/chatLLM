@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { AtSign, SendHorizonal, Sparkle, Upload } from 'lucide-react';
+import { AtSign, SendHorizonal, Sparkle, StopCircle, Upload } from 'lucide-react';
 import ModelsList from "./models-list";
 import { chatStore } from "../stores/chat-store";
 import { observer, useLocalObservable } from "mobx-react-lite";
@@ -12,6 +12,7 @@ const ChatBox = observer(function ChatBox() {
     const localState = useLocalObservable(() => ({
         message: '',
         selectedFiles: [] as File[],
+        loading: false,
         setMessage(message: string) {
             this.message = message;
         },
@@ -20,6 +21,9 @@ const ChatBox = observer(function ChatBox() {
         },
         clearFiles() {
             this.selectedFiles = [];
+        },
+        setLoading(loading: boolean) {
+            this.loading = loading;
         }
     }));
 
@@ -28,7 +32,16 @@ const ChatBox = observer(function ChatBox() {
     const handleSendMessage = async () => {
         if (!localState.message.trim() && localState.selectedFiles.length === 0) return;
 
+        // If we're already loading/generating, cancel the current request
+        if (localState.loading) {
+            chatStore.cancelCurrentMessage();
+            localState.setLoading(false);
+            return;
+        }
+
         try {
+            localState.setLoading(true);
+
             if (localState.selectedFiles.length > 0) {
                 // Only proceed if model supports vision
                 if (!modelStore.modelHasCapability("vision")) {
@@ -59,7 +72,7 @@ const ChatBox = observer(function ChatBox() {
                 chatStore.sendMessageWithImages(localState.message, base64Images);
             } else {
                 // Send text-only message
-                chatStore.sendMessage(localState.message);
+                await chatStore.sendMessage(localState.message);
             }
 
             // Reset state
@@ -70,7 +83,15 @@ const ChatBox = observer(function ChatBox() {
             toast("Error", {
                 description: "Failed to send message with images. Please try again.",
             });
+        } finally {
+            localState.setLoading(false);
         }
+    };
+
+    // Function to handle stopping/canceling message generation
+    const handleStopGeneration = () => {
+        chatStore.cancelCurrentMessage();
+        localState.setLoading(false);
     };
 
     const handleUploadFile = () => {
@@ -162,9 +183,23 @@ const ChatBox = observer(function ChatBox() {
                     value={localState.message}
                     className="border-0 shadow-none outline-none border-none rounded-full"
                     placeholder="Type a message"
+                    disabled={localState.loading}
                 />
-                <SendHorizonal onClick={handleSendMessage} className="w-8 h-8 p-1 hover:bg-gray-100 rounded-lg hover:cursor-pointer" />
-                <Upload onClick={handleUploadFile} className="w-8 h-8 p-1 hover:bg-gray-100 rounded-lg hover:cursor-pointer" />
+                <button
+                    onClick={localState.loading ? handleStopGeneration : handleSendMessage}
+                    className="w-8 h-8 p-1 hover:bg-gray-100 rounded-lg hover:cursor-pointer"
+                    title={localState.loading ? "Stop generation" : "Send message"}
+                >
+                    {localState.loading ? (
+                        <StopCircle className="w-6 h-6 opacity-50" />
+                    ) : (
+                        <SendHorizonal className="w-6 h-6" />
+                    )}
+                </button>
+                <Upload
+                    onClick={localState.loading ? undefined : handleUploadFile}
+                    className={`w-8 h-8 p-1 hover:bg-gray-100 rounded-lg ${localState.loading ? 'opacity-50 cursor-not-allowed' : 'hover:cursor-pointer'}`}
+                />
                 {/* Hidden file input element */}
                 <input
                     type="file"

@@ -65,8 +65,6 @@ const BotMessage = observer(function BotMessage({ message }: BotMessageProps) {
 
     return (
         <div className="p-4 rounded-lg max-w-[100%] relative markdown-content">
-
-
             <div className="prose prose-sm max-w-none dark:prose-invert">
                 {safeContent ? (
                     <ReactMarkdown

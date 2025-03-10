@@ -151,7 +151,7 @@ class ModelStore {
   async streamChat(
     messages: ChatMessage[],
     onChunk: (chunk: string) => void,
-    options?: ChatOptions
+    signal?: AbortSignal
   ): Promise<string> {
     if (!this.selectedModel) {
       throw new Error("No model selected");
@@ -175,11 +175,29 @@ class ModelStore {
         model: this.selectedModel.name,
         messages,
         stream: true,
-        options,
       });
+
+      // Set up a handler for the abort signal
+      if (signal) {
+        signal.addEventListener(
+          "abort",
+          () => {
+            // We need to stop the iteration somehow
+            // Since we can't directly abort the Ollama stream,
+            // we'll rely on handling the AbortError in the catch block
+            throw new DOMException("Aborted", "AbortError");
+          },
+          { once: true }
+        );
+      }
 
       // Process the streamed response and call the callback for each chunk
       for await (const part of response) {
+        // Check if aborted
+        if (signal?.aborted) {
+          throw new DOMException("Aborted", "AbortError");
+        }
+
         if (part.message?.content) {
           const chunk = part.message.content;
           result += chunk;
@@ -193,6 +211,12 @@ class ModelStore {
 
       return result || "No response received";
     } catch (error) {
+      // Check if this is an abort error
+      if (error instanceof DOMException && error.name === "AbortError") {
+        console.log("Request was aborted");
+        throw error; // Re-throw to be handled by the caller
+      }
+
       console.error("Error in chat:", error);
       throw error;
     }
@@ -204,7 +228,8 @@ class ModelStore {
   async streamChatWithImages(
     prompt: string,
     images: string[],
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
   ): Promise<string> {
     if (!this.modelHasCapability("vision")) {
       throw new Error("Selected model does not support vision capabilities");
@@ -216,11 +241,15 @@ class ModelStore {
       images,
     };
 
-    return this.streamChat([message], (chunk: string) => {
-      if (chunk) {
-        onChunk(chunk);
-      }
-    });
+    return this.streamChat(
+      [message],
+      (chunk: string) => {
+        if (chunk) {
+          onChunk(chunk);
+        }
+      },
+      signal
+    );
   }
 
   /**
