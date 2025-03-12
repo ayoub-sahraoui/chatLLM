@@ -201,8 +201,37 @@ export interface ChatResponse {
   total_duration?: number;
 }
 
+export type ProviderType =
+  | "ollama"
+  | "openai"
+  | "anthropic"
+  | "deepseek"
+  | "gemini";
+
+export interface ProviderConfig {
+  type: ProviderType;
+  apiKey?: string;
+  baseUrl?: string;
+  enabled: boolean;
+  models?: string[];
+}
+
+export interface ProviderSettings {
+  ollama: ProviderConfig;
+  openai: ProviderConfig;
+  anthropic: ProviderConfig;
+  deepseek: ProviderConfig;
+  gemini: ProviderConfig;
+}
+
 export interface CommandResult {
   isCommand: boolean;
-  processedPrompt: string;
+  prompt: string;
   systemMessage?: string;
+}
+
+export interface ModelError extends Error {
+  provider: string;
+  statusCode?: number;
+  details?: string;
 }

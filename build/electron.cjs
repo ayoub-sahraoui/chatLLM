@@ -17,15 +17,15 @@ let mainWindow;
 // Register protocol handler for serving local files
 app.whenReady().then(() => {
   // Register file protocol handler
-  protocol.registerFileProtocol('file', (request, callback) => {
-    const pathname = decodeURI(request.url.replace('file:///', ''));
+  protocol.registerFileProtocol("file", (request, callback) => {
+    const pathname = decodeURI(request.url.replace("file:///", ""));
     try {
       callback(pathname);
     } catch (error) {
-      console.error('Failed to register protocol', error);
+      console.error("Failed to register protocol", error);
     }
   });
-  
+
   createWindow();
 });
 
@@ -43,6 +43,8 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: false, // Note: Only use for development
     },
+    icon: path.join(__dirname, "../public/chatllm-icon.svg"),
+    center: true,
   });
 
   if (isDev) {
@@ -71,20 +73,19 @@ function createWindow() {
     }
 
     // Use loadFile with proper URL format
-    mainWindow.loadURL(url.format({
-      pathname: htmlPath,
-      protocol: 'file:',
-      slashes: true
-    }));
+    mainWindow.loadURL(
+      url.format({
+        pathname: htmlPath,
+        protocol: "file:",
+        slashes: true,
+      })
+    );
   }
 
   mainWindow.on("closed", function () {
     mainWindow = null;
   });
 }
-
-// Remove the default ready event since we're handling it with protocol registration
-// app.on("ready", createWindow);
 
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") {

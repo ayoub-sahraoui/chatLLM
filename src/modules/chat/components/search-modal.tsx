@@ -58,9 +58,9 @@ const SearchModal = observer(function SearchModal({ children }: ConversationsSea
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md dark:bg-gray-800 dark:border-gray-700">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+                    <DialogTitle className="flex items-center gap-2 dark:text-gray-100">
                         <Search size={18} />
                         Search Conversations
                     </DialogTitle>
@@ -71,7 +71,7 @@ const SearchModal = observer(function SearchModal({ children }: ConversationsSea
                     value={localState.searchQuery}
                     onChange={(e) => localState.setSearchQuery(e.target.value)}
                     autoFocus
-                    className="mb-4"
+                    className="mb-4 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
                 />
 
                 <div className="max-h-72 overflow-y-auto">
@@ -81,12 +81,12 @@ const SearchModal = observer(function SearchModal({ children }: ConversationsSea
                                 <Button
                                     key={conversation.id}
                                     variant="outline"
-                                    className="w-full justify-start text-left h-auto py-3"
+                                    className="w-full justify-start text-left h-auto py-3 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
                                     onClick={() => localState.selectConversation(conversation.id)}
                                 >
                                     <div>
                                         <p className="font-medium">{conversation.title}</p>
-                                        <p className="text-xs text-muted-foreground">
+                                        <p className="text-xs text-muted-foreground dark:text-gray-400">
                                             {new Date(conversation.updatedAt).toLocaleString()}
                                         </p>
                                     </div>
@@ -94,7 +94,7 @@ const SearchModal = observer(function SearchModal({ children }: ConversationsSea
                             ))}
                         </div>
                     ) : localState.searchQuery ? (
-                        <p className="text-center text-muted-foreground py-4">
+                        <p className="text-center text-muted-foreground dark:text-gray-400 py-4">
                             No conversations found
                         </p>
                     ) : null}
