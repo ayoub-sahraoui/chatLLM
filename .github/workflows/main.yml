@@ -25,7 +25,7 @@ jobs:
         run: npm run electron:build:mac
 
       - name: 📤 Upload DMG as Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macOS-build
           path: dist/*.dmg
