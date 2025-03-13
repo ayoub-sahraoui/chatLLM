@@ -1,11 +1,5 @@
 import { Input } from "@/components/ui/input";
-import {
-  AtSign,
-  SendHorizonal,
-  Sparkle,
-  StopCircle,
-  Upload,
-} from "lucide-react";
+import { AtSign, SendHorizonal, StopCircle, Upload } from "lucide-react";
 import ModelsList from "./models-list";
 import { chatStore } from "../stores/chat-store";
 import { observer, useLocalObservable } from "mobx-react-lite";

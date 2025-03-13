@@ -28,6 +28,23 @@ console.log(
 const packageJson = require("./package.json");
 const buildConfig = packageJson.build || {};
 
+// Make sure we have icon configuration
+buildConfig.mac = buildConfig.mac || {};
+buildConfig.win = buildConfig.win || {};
+buildConfig.linux = buildConfig.linux || {};
+
+// Set icon paths for all platforms
+buildConfig.mac.icon = path.join(__dirname, "assets/icons/chatllm-icon.icns");
+buildConfig.win.icon = path.join(__dirname, "assets/icons/chatllm-icon.ico");
+buildConfig.linux.icon = path.join(__dirname, "assets/icons/chatllm-icon.png");
+
+// Ensure the icons directory is included in the build
+buildConfig.extraResources = buildConfig.extraResources || [];
+buildConfig.extraResources.push({
+  from: "assets/icons",
+  to: "assets/icons",
+});
+
 // Add or update the extraResources section to include required dependencies
 buildConfig.extraResources = buildConfig.extraResources || [];
 

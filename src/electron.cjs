@@ -43,7 +43,16 @@ function createWindow() {
       contextIsolation: true,
       webSecurity: false, // Note: Only use for development
     },
-    icon: path.join(__dirname, "../public/chatllm-icon.svg"),
+    // Update icon paths to ensure they're correct for all environments
+    icon: path.join(
+      __dirname,
+      isDev
+        ? "../assets/icons/chatllm-icon.png"
+        : path.join(
+            process.resourcesPath,
+            "app.asar/assets/icons/chatllm-icon.png"
+          )
+    ),
     center: true,
   });
 

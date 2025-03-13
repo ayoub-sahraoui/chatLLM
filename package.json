@@ -87,15 +87,20 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "assets/chatllm-icon.icns",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
+      "icon": "assets/chatllm-icon.ico",
       "target": [
         "nsis"
       ]
+    },
+    "linux": {
+      "icon": "assets/chatllm-icon.png"
     },
     "extraMetadata": {
       "main": "build/electron.cjs"

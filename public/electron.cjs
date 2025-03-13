@@ -25,6 +25,11 @@ function createWindow() {
         isDev ? "../src/main/preload.cjs" : "preload.cjs"
       ),
     },
+    // Add icon configuration
+    icon: path.join(
+      __dirname,
+      isDev ? "../assets/chatllm-icon.png" : "chatllm-icon.png"
+    ),
   });
 
   if (isDev) {
